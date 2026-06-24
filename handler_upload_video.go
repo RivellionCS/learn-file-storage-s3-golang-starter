@@ -108,12 +108,13 @@ func (cfg *apiConfig) handlerUploadVideo(w http.ResponseWriter, r *http.Request)
 	}
 
 	pathPrefix := ""
-	if vidPrefix == "16:9" {
+	switch vidPrefix {
+	case "16:9":
 		pathPrefix = "landscape"
-	} else if vidPrefix == "9:16" {
+	case "9:16":
 		pathPrefix = "portrait"
-	} else {
-		pathPrefix = vidPrefix
+	default:
+		pathPrefix = "other"
 	}
 
 	fileNameKey := fmt.Sprintf("%v/%v.mp4", pathPrefix, hex.EncodeToString(byteSize[:]))
