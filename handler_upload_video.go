@@ -13,11 +13,13 @@ import (
 	"net/http"
 	"os"
 	"os/exec"
+	"strings"
 	"time"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/service/s3"
 	"github.com/bootdotdev/learn-file-storage-s3-golang-starter/internal/auth"
+	"github.com/bootdotdev/learn-file-storage-s3-golang-starter/internal/database"
 	"github.com/google/uuid"
 )
 
@@ -227,4 +229,26 @@ func generatePresignedURL(s3Client *s3.Client, bucket, key string, expireTime ti
 	}
 
 	return presignedRequest.URL, nil
+}
+
+func(cfg *apiConfig) dbVideoToSignedVideo(video database.Video) (database.Video, error) {
+	if video.VideoURL == nil {
+		return database.Video{}, fmt.Errorf("video url cannot be empty")
+	}
+
+	bucketAndKey := strings.Split(*video.VideoURL, ",")
+	if len(bucketAndKey) != 2 {
+		return database.Video{}, fmt.Errorf("video url is malformed")
+	}
+
+	defaultDuration := 15 * time.Minute
+
+	presignedURL, err := generatePresignedURL(cfg.s3Client, bucketAndKey[0], bucketAndKey[1], defaultDuration)
+	if err != nil {
+		return database.Video{}, err
+	}
+
+	video.VideoURL = &presignedURL
+
+	return video, nil
 }
